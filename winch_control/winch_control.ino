@@ -241,7 +241,7 @@ void loop() {
     stepper.run();
     
   }
-  stepper.run();
+  
 
   PRE_BTN_STATE = BTN_STATE;
 
