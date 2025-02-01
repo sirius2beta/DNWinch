@@ -294,7 +294,9 @@ void loop() {
         if(ldata == "rq"){
           Serial.println("rs,0");
         }else if(ldata == "z"){
-          BTN_STATE = 0;
+          OFFSET_P = stepper.currentPosition()+OFFSET_P;
+          stepper.setCurrentPosition(0);
+          //BTN_STATE = 0;
           //stop
         }
       }else if(field == 1){
