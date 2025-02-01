@@ -37,6 +37,7 @@ const int LOADCELL_SCK_PIN = 33;
 #define WL -300000
 
 int BTN_STATE = 0; // 0:stop 1:up 2:down 3:reset
+bool remote_controlling = false;
 int PRE_BTN_STATE = -1;
 
 int SCREEN_RATE = 1000;
@@ -45,7 +46,7 @@ int SCREEN_T = 0;
 int STEPPER_CURRENT_P = 0;
 int OFFSET_P = 0;
 
-String isRunning = "F";
+String isRunning = "S";
 
 
 HX711 scale;
@@ -115,11 +116,17 @@ void loop() {
   if(digitalRead(STOPBTN) == LOW){
     BTN_STATE = 0;
   }else if(digitalRead(UPBTN) == LOW){
-    BTN_STATE = 1;
+    if(!remote_controlling){
+      BTN_STATE = 1;
+    }
   }else if(digitalRead(DOWNBTN) == LOW){
-    BTN_STATE = 2;
+    if(!remote_controlling){
+      BTN_STATE = 2;
+    }
   }else if(digitalRead(SETBTN) == LOW){
-    BTN_STATE = 3;
+    if(!remote_controlling){
+      BTN_STATE = 3;
+    }
   }else{
     // no button pressed
   }
@@ -142,7 +149,7 @@ void loop() {
   }
 
   if(BTN_STATE == 0){
-    if(PRE_BTN_STATE == 0){
+    if((PRE_BTN_STATE == 0) && (!remote_controlling)){
       stepper.run();
       
     }else{
@@ -242,9 +249,10 @@ void loop() {
   
   unsigned long currentT = millis();
   if(stepper.currentPosition() == stepper.targetPosition()){
-    isRunning = "R"; //R = running
+    remote_controlling = false;
+    isRunning = "S"; //R = running
   }else{
-    isRunning = "S";  // S = stopped
+    isRunning = "R";  // S = stopped
   }
   if(currentT-SCREEN_T > SCREEN_RATE){
     SCREEN_T = currentT;
@@ -322,10 +330,11 @@ void loop() {
           }
         }else if(operation == 'c'){
           //set move() position
-          long steps = ldata.toInt();
+          long steps = ldata.toInt() - STEPPER_CURRENT_P;
+          OFFSET_P = stepper.currentPosition()+OFFSET_P;
+          stepper.setCurrentPosition(0);
           stepper.move(steps);
-          Serial.print("set move to:");
-          
+          remote_controlling = true; 
 
         }
       }
