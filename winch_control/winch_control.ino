@@ -291,6 +291,12 @@ void loop() {
         operation = ldata[0];
         Serial.print("Operation:");
         Serial.println(ldata);
+        if(ldata == "rq"){
+          Serial.println("rs,0");
+        }else if(ldata == "z"){
+          BTN_STATE = 0;
+          //stop
+        }
       }else if(field == 1){
         if(operation == 's'){ //set
           int field2 = 0;
@@ -318,7 +324,8 @@ void loop() {
           }
         }else if(operation == 'c'){
           //set move() position
-          long steps = ldata.toInt();
+          long steps = ldata.toInt()-STEPPER_CURRENT_P;
+          remote_controlling = true;
           stepper.move(steps);
           Serial.print("set move to:");
 
