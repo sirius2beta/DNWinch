@@ -37,7 +37,6 @@ const int LOADCELL_SCK_PIN = 33;
 #define WL -300000
 
 int BTN_STATE = 0; // 0:stop 1:up 2:down 3:reset
-bool remote_controlling = false;
 int PRE_BTN_STATE = -1;
 
 int SCREEN_RATE = 1000;
@@ -45,8 +44,6 @@ int SCREEN_T = 0;
 
 int STEPPER_CURRENT_P = 0;
 int OFFSET_P = 0;
-
-String isRunning = "S";
 
 
 HX711 scale;
@@ -93,6 +90,7 @@ void setup() {
   u8g2.sendBuffer();
   
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  Serial.println(xPortGetCoreID());
   
   xTaskCreatePinnedToCore(
       Task1code, /* Function to implement the task */
@@ -116,19 +114,11 @@ void loop() {
   if(digitalRead(STOPBTN) == LOW){
     BTN_STATE = 0;
   }else if(digitalRead(UPBTN) == LOW){
-    if(!remote_controlling){
-      BTN_STATE = 1;
-    }
+    BTN_STATE = 1;
   }else if(digitalRead(DOWNBTN) == LOW){
-    if(!remote_controlling){
-      BTN_STATE = 2;
-    }
+    BTN_STATE = 2;
   }else if(digitalRead(SETBTN) == LOW){
-    if(!remote_controlling){
-      BTN_STATE = 3;
-    }
-  }else{
-    // no button pressed
+    BTN_STATE = 3;
   }
 
   //long reading = scale.read();
@@ -137,7 +127,7 @@ void loop() {
     
     if(PRE_BTN_STATE == 2){
       BTN_STATE = 0;
-      //Serial.println("STOP !");
+      Serial.println("STOP !");
       OFFSET_P = stepper.currentPosition()+OFFSET_P;
       stepper.setCurrentPosition(0);
       u8g2.clearBuffer();
@@ -149,11 +139,11 @@ void loop() {
   }
 
   if(BTN_STATE == 0){
-    if((PRE_BTN_STATE == 0) && (!remote_controlling)){
+    if(PRE_BTN_STATE == 0){
       stepper.run();
       
     }else{
-      //Serial.println("STOP !");
+      Serial.println("STOP !");
       OFFSET_P = stepper.currentPosition()+OFFSET_P;
       stepper.setCurrentPosition(0);
       u8g2.clearBuffer();
@@ -167,11 +157,11 @@ void loop() {
     if(PRE_BTN_STATE == 1){
       stepper.run();
     }else if(PRE_BTN_STATE == 2){
-      //Serial.println("STOP !");
+      Serial.println("STOP !");
       OFFSET_P = stepper.currentPosition()+OFFSET_P;
       stepper.setCurrentPosition(0);
       delay(500);
-      //Serial.println("RUN UP !");
+      Serial.println("RUN UP !");
       u8g2.clearBuffer();
       u8g2.setFont(u8g2_font_logisoso16_tf); //設定字型
       u8g2.drawStr(0,16,String("Pos: running").c_str());  //輸出文字
@@ -183,7 +173,7 @@ void loop() {
       u8g2.sendBuffer();
       stepper.move(-1000000);
     }else{
-      //Serial.println("RUN UP !");
+      Serial.println("RUN UP !");
       u8g2.clearBuffer();
       u8g2.setFont(u8g2_font_logisoso16_tf); //設定字型
       u8g2.drawStr(0,16,String("Pos: running").c_str());  //輸出文字
@@ -200,7 +190,7 @@ void loop() {
     if(PRE_BTN_STATE == 2){
       stepper.run();
     }else if(PRE_BTN_STATE == 1){
-      //Serial.println("STOP !");
+      Serial.println("STOP !");
       OFFSET_P = stepper.currentPosition()+OFFSET_P;
       stepper.setCurrentPosition(0);
       delay(500);
@@ -211,7 +201,7 @@ void loop() {
       u8g2.setFont(u8g2_font_open_iconic_arrow_2x_t);
       u8g2.setCursor(0,40);
       u8g2.drawGlyph(0, 40, 0x44);
-      //Serial.println("RUN DOWN !");
+      Serial.println("RUN DOWN !");
       u8g2.sendBuffer();
       stepper.move(1000000);
     }else{
@@ -222,7 +212,7 @@ void loop() {
       u8g2.setFont(u8g2_font_open_iconic_arrow_2x_t);
       u8g2.setCursor(0,40);
       u8g2.drawGlyph(0, 40, 0x44);
-      //Serial.println("RUN DOWN !");
+      Serial.println("RUN DOWN !");
       u8g2.sendBuffer();
       //steppers.setSpeed(3000);
       stepper.move(1000000);
@@ -241,7 +231,6 @@ void loop() {
     stepper.run();
     
   }
-  
 
   PRE_BTN_STATE = BTN_STATE;
 
@@ -249,15 +238,10 @@ void loop() {
   
   
   unsigned long currentT = millis();
-  if(stepper.currentPosition() == stepper.targetPosition()){
-    remote_controlling = false;
-    isRunning = "S"; //R = running
-  }else{
-    isRunning = "R";  // S = stopped
-  }
+  
   if(currentT-SCREEN_T > SCREEN_RATE){
     SCREEN_T = currentT;
-    Serial.println("cs,"+String(STEPPER_CURRENT_P)+","+String(reading)+","+isRunning);
+    Serial.println(String(reading));
     
   }
   
@@ -272,8 +256,8 @@ void loop() {
   if (Serial.available() > 0) {
     String data = Serial.readStringUntil('\n');
     Serial.flush();
-    //Serial.print("Receive data: ");
-    //Serial.println(data);
+    Serial.print("Receive data: ");
+    Serial.println(data);
     int field = 0;
     char operation = '0';
     int index = 0;
@@ -296,14 +280,8 @@ void loop() {
         // r : reset
         // z : stop, just for stepper motors
         operation = ldata[0];
-        //Serial.print("Operation:");
-        //Serial.println(ldata);
-        if(ldata == "rq"){
-          Serial.println("rs,0");
-        }else if(ldata == "z"){
-          BTN_STATE = 0;
-          //stop
-        }
+        Serial.print("Operation:");
+        Serial.println(ldata);
       }else if(field == 1){
         if(operation == 's'){ //set
           int field2 = 0;
@@ -317,12 +295,12 @@ void loop() {
           while(index2 != -1){
             index2 = split(ldata2, tmpdata, ' ');
             if(field2 == 0){
-              //Serial.print("Speed:");
-              //Serial.println(ldata2);//setMaxSpeed
+              Serial.print("Speed:");
+              Serial.println(ldata2);//setMaxSpeed
               maxSpeed = ldata2.toInt();
             }else{
-              //Serial.print("Acc:");
-              //Serial.println(ldata2);//setMaxSpeed
+              Serial.print("Acc:");
+              Serial.println(ldata2);//setMaxSpeed
               acc = ldata2.toInt();
               stepper.setAcceleration(acc);
               stepper.setMaxSpeed(maxSpeed);
@@ -331,29 +309,15 @@ void loop() {
           }
         }else if(operation == 'c'){
           //set move() position
-          long steps = ldata.toInt() - STEPPER_CURRENT_P;
-          OFFSET_P = stepper.currentPosition()+OFFSET_P;
-          stepper.setCurrentPosition(0);
+          long steps = ldata.toInt();
           stepper.move(steps);
-          remote_controlling = true; 
-          Serial.print("move:");
-          Serial.println(steps);
+          Serial.print("set move to:");
+
         }
       }
-
       field ++;
-        
-      
-    }
-  
-    
+    } 
   }
-    //char str[] = "1:10;2:20;3:12.3;4:0.93;5:19.2;6:20";
-    
-    //Serial.println(str);
-    //delay(100);
     long int t2 = millis();
-    //Serial.println("Time taken by the task: "); Serial.print(t2-t1); Serial.println(" milliseconds");
-
 }
 
