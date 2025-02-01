@@ -37,6 +37,7 @@ const int LOADCELL_SCK_PIN = 33;
 #define WL -300000
 
 int BTN_STATE = 0; // 0:stop 1:up 2:down 3:reset
+bool remote_controlling = false;
 int PRE_BTN_STATE = -1;
 
 int SCREEN_RATE = 1000;
@@ -44,6 +45,8 @@ int SCREEN_T = 0;
 
 int STEPPER_CURRENT_P = 0;
 int OFFSET_P = 0;
+
+String isRunning = "S";
 
 
 HX711 scale;
@@ -239,11 +242,7 @@ void loop() {
   
   unsigned long currentT = millis();
   
-  if(currentT-SCREEN_T > SCREEN_RATE){
-    SCREEN_T = currentT;
-    Serial.println(String(reading));
-    
-  }
+
   
   if(currentT-initialT >= 250){
     initialT = currentT;
@@ -251,7 +250,17 @@ void loop() {
   }
 
   long int t1 = millis();
- 
+  if(stepper.currentPosition() == stepper.targetPosition()){
+    remote_controlling = false;
+    isRunning = "S"; //R = running
+  }else{
+    isRunning = "R";  // S = stopped
+  }
+  if(currentT-SCREEN_T > SCREEN_RATE){
+    SCREEN_T = currentT;
+    Serial.println("cs,"+String(STEPPER_CURRENT_P)+","+String(reading)+","+isRunning);
+    
+  }
 
   if (Serial.available() > 0) {
     String data = Serial.readStringUntil('\n');
