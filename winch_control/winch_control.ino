@@ -241,7 +241,7 @@ void loop() {
   
   if(currentT-SCREEN_T > SCREEN_RATE){
     SCREEN_T = currentT;
-    Serial.println(STEPPER_CURRENT_P+" "+String(reading));
+    Serial.println(String(STEPPER_CURRENT_P)+" "+String(reading));
     
   }
   
