@@ -241,6 +241,7 @@ void loop() {
     stepper.run();
     
   }
+  stepper.run();
 
   PRE_BTN_STATE = BTN_STATE;
 
@@ -335,7 +336,8 @@ void loop() {
           stepper.setCurrentPosition(0);
           stepper.move(steps);
           remote_controlling = true; 
-
+          Serial.print("move:");
+          Serial.println(steps);
         }
       }
 
