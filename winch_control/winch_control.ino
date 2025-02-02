@@ -294,9 +294,7 @@ void loop() {
         if(ldata == "rq"){
           Serial.println("rs,0");
         }else if(ldata == "z"){
-          OFFSET_P = stepper.currentPosition()+OFFSET_P;
-          stepper.setCurrentPosition(0);
-          //BTN_STATE = 0;
+          BTN_STATE = 0;
           //stop
         }
       }else if(field == 1){
@@ -338,4 +336,3 @@ void loop() {
   }
     long int t2 = millis();
 }
-
