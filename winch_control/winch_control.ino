@@ -293,6 +293,7 @@ void loop() {
         Serial.println(ldata);
         if(ldata == "re"){
           // reset tension and current position
+          Serial.println("reset");
           stepper.setCurrentPosition(0);
           OFFSET_P = 0;
           WL = reading + 10000;
