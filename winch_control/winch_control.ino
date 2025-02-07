@@ -289,7 +289,7 @@ void loop() {
         // r : reset
         // z : stop, just for stepper motors
         operation = ldata;
-        Serial.print("wdOperation:");
+        Serial.print("Operation:");
         Serial.println(ldata);
         if(operation == "re"){
           // reset tension and current position
@@ -309,8 +309,6 @@ void loop() {
           // reset current position
           stepper.setCurrentPosition(0);
           OFFSET_P = 0;
-        }else if(ldata == "s"){
-          Serial.println("ack,s,0");
         }
       }else if(field == 1){
         if(operation == "s"){ //set
