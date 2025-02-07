@@ -34,7 +34,7 @@ U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ 5, /* data=*/ 4, /
 const int LOADCELL_DOUT_PIN = 26;
 const int LOADCELL_SCK_PIN = 33;
 
-#define WL -300000
+int WL = -300000;
 
 int BTN_STATE = 0; // 0:stop 1:up 2:down 3:reset
 bool remote_controlling = false;
@@ -268,7 +268,7 @@ void loop() {
     Serial.print("Receive data: ");
     Serial.println(data);
     int field = 0;
-    char operation = '0';
+    String operation = "0";
     int index = 0;
     while(index != -1){
       index = data.indexOf(',');
@@ -288,19 +288,28 @@ void loop() {
         // c : control 
         // r : reset
         // z : stop, just for stepper motors
-        operation = ldata[0];
+        operation = ldata;
         Serial.print("Operation:");
         Serial.println(ldata);
-        if(ldata == "rq"){
+        if(ldata == "re"){
+          // reset tension and current position
+          stepper.setCurrentPosition(0);
+          OFFSET_P = 0;
+          WL = reading + 10000;
+        }else if(ldata == "rq"){
           Serial.println("rs,0");
         }else if(ldata == "z"){
           OFFSET_P = stepper.currentPosition()+OFFSET_P;
           stepper.setCurrentPosition(0);
           //BTN_STATE = 0;
           //stop
+        }else if(ldata == "rp"){
+          // reset current position
+          stepper.setCurrentPosition(0);
+          OFFSET_P = 0;
         }
       }else if(field == 1){
-        if(operation == 's'){ //set
+        if(operation == "s"){ //set
           int field2 = 0;
           String tmpdata = ldata;
           String ldata2;
@@ -324,13 +333,17 @@ void loop() {
             }
             field2++;
           }
-        }else if(operation == 'c'){
+        }else if(operation == "c"){
           //set move() position
           long steps = ldata.toInt()-STEPPER_CURRENT_P;
           remote_controlling = true;
           stepper.move(steps);
           Serial.print("set move to:");
 
+        }else if(operation == "t"){
+          WL = ldata.toInt();
+          Serial.print("WL:");
+          Serial.println(WL);
         }
       }
       field ++;
