@@ -309,6 +309,8 @@ void loop() {
           // reset current position
           stepper.setCurrentPosition(0);
           OFFSET_P = 0;
+        }else if(ldata == "s"){
+          Serial.println("ack,s,0");
         }
       }else if(field == 1){
         if(operation == "s"){ //set
