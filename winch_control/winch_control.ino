@@ -291,15 +291,16 @@ void loop() {
         operation = ldata;
         Serial.print("Operation:");
         Serial.println(ldata);
-        if(ldata == "re"){
+        if(operation == "re"){
           // reset tension and current position
-          Serial.println("reset");
+          Serial.println("ack,re,0");
           stepper.setCurrentPosition(0);
           OFFSET_P = 0;
           WL = reading + 10000;
         }else if(ldata == "rq"){
           Serial.println("rs,0");
         }else if(ldata == "z"){
+          Serial.println("ack,z,0");
           OFFSET_P = stepper.currentPosition()+OFFSET_P;
           stepper.setCurrentPosition(0);
           //BTN_STATE = 0;
